@@ -33,9 +33,9 @@ export default function ChatPage() {
       setMessages([
         { role: "agent", content: data.message },
         { role: "image", src: data.image },
-      ]);
+      ] as ChatMessage[]);
     } else {
-      setMessages([{ role: "agent", content: data.message }]);
+      setMessages([{ role: "agent", content: data.message }] as ChatMessage[]);
     }
   }
 
@@ -46,26 +46,30 @@ export default function ChatPage() {
     if (!input.trim()) return;
 
     const newMessages = [...messages, { role: "user", content: input }];
-    setMessages(newMessages);
+  setMessages(newMessages as ChatMessage[]);
     setInput("");
 
     const res = await fetch("/api/chat", {
       method: "POST",
       body: JSON.stringify({
-        messages: newMessages.map(m => m.content).join("\n"),
+        // messages: newMessages.map(m => m.content).join("\n"),
+        messages: newMessages
+        .filter((m): m is Exclude<ChatMessage, { role: "image" }> => m.role !== "image")
+        .map(m => m.content)
+        .join("\n"),
       }),
     });
 
     const data = await res.json();
 
     if (data.type === "image") {
-      setMessages(prev => [
+      setMessages(prev => ([
         ...prev,
         { role: "agent", content: data.message },
         { role: "image", src: data.image },
-      ]);
+      ] as ChatMessage[]));
     } else {
-      setMessages(prev => [...prev, { role: "agent", content: data.message }]);
+      setMessages(prev => ([...prev, { role: "agent", content: data.message }] as ChatMessage[]));
     }
   }
 
