@@ -24,7 +24,7 @@ const showImageFunctionDeclaration = {
 export async function runGemini(messages: string) {
   try {
     const response = await ai.models.generateContent({
-      model: process.env.GEMINI_MODEL , // or 'gemini-1.5-flash' or 'gemini-1.5-pro'
+      model: process.env.GEMINI_MODEL ?? "gemini-3-flash-preview",
       contents: messages,
       config: {
         systemInstruction: SYSTEM_PROMPT,
@@ -40,13 +40,17 @@ export async function runGemini(messages: string) {
     if (response.functionCalls && response.functionCalls.length > 0) {
       const functionCall = response.functionCalls[0];
       
-      if (functionCall.name === 'show_image') {
+      if (
+        functionCall.name === "show_image" &&
+        functionCall.args &&
+        typeof functionCall.args.caption === "string"
+      ) {
         return {
-          type: 'image',
+          type: "image",
           image: "/sample.png",
           message: functionCall.args.caption,
         };
-      }
+}
     }
 
     // Return normal text response
