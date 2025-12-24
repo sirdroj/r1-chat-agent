@@ -19,34 +19,36 @@ export default function ChatPage() {
   }, [messages]);
 
   useEffect(() => {
-  async function initialGreeting() {
-    const res = await fetch("/api/chat", {
-      method: "POST",
-      body: JSON.stringify({
-        messages: "Hello",
-      }),
-    });
+    async function initialGreeting() {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        body: JSON.stringify({
+          messages: "Hello",
+        }),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (data.type === "image") {
-      setMessages([
-        { role: "agent", content: data.message },
-        { role: "image", src: data.image },
-      ] as ChatMessage[]);
-    } else {
-      setMessages([{ role: "agent", content: data.message }] as ChatMessage[]);
+      if (data.type === "image") {
+        setMessages([
+          { role: "agent", content: data.message },
+          { role: "image", src: data.image },
+        ] as ChatMessage[]);
+      } else {
+        setMessages([
+          { role: "agent", content: data.message },
+        ] as ChatMessage[]);
+      }
     }
-  }
 
-  initialGreeting();
-}, []); // Empty dependency array means this runs once on mount
+    initialGreeting();
+  }, []); // Empty dependency array means this runs once on mount
 
   async function sendMessage() {
     if (!input.trim()) return;
 
     const newMessages = [...messages, { role: "user", content: input }];
-  setMessages(newMessages as ChatMessage[]);
+    setMessages(newMessages as ChatMessage[]);
     setInput("");
 
     const res = await fetch("/api/chat", {
@@ -54,22 +56,31 @@ export default function ChatPage() {
       body: JSON.stringify({
         // messages: newMessages.map(m => m.content).join("\n"),
         messages: newMessages
-        .filter((m): m is Exclude<ChatMessage, { role: "image" }> => m.role !== "image")
-        .map(m => m.content)
-        .join("\n"),
+          .filter(
+            (m): m is Exclude<ChatMessage, { role: "image" }> =>
+              m.role !== "image"
+          )
+          .map((m) => m.content)
+          .join("\n"),
       }),
     });
 
     const data = await res.json();
 
     if (data.type === "image") {
-      setMessages(prev => ([
-        ...prev,
-        { role: "agent", content: data.message },
-        { role: "image", src: data.image },
-      ] as ChatMessage[]));
+      setMessages(
+        (prev) =>
+          [
+            ...prev,
+            { role: "agent", content: data.message },
+            { role: "image", src: data.image },
+          ] as ChatMessage[]
+      );
     } else {
-      setMessages(prev => ([...prev, { role: "agent", content: data.message }] as ChatMessage[]));
+      setMessages(
+        (prev) =>
+          [...prev, { role: "agent", content: data.message }] as ChatMessage[]
+      );
     }
   }
 
@@ -82,50 +93,53 @@ export default function ChatPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-100">
-      <div className="w-screen h-[640px] bg-blue-500 rounded-3xl p-4 flex flex-col">
-        
+      <div className="w-screen h-screen bg-blue-500 rounded-3xl p-4 flex flex-col py-[20px]">
         {/* Header */}
         <div className="text-white font-semibold mb-3">
-          Bright Assistant <span className="text-green-400 text-l ml-2.5">•</span> Online
+          Bright Assistant{" "}
+          <span className="text-green-400 text-l ml-2.5">•</span> Online
         </div>
 
         {/* Chat */}
-        <div className="flex-1 space-y-3 overflow-y-auto">
-          {messages.map((m, i) => {
-            if (m.role === "image") {
+        <div className="flex-1 overflow-y-auto">
+          <div className="min-h-full flex flex-col justify-end space-y-3">
+            {messages.map((m, i) => {
+              if (m.role === "image") {
+                return (
+                  <Image
+                    key={i}
+                    src={m.src}
+                    alt="agent"
+                    width={220}
+                    height={160}
+                    className="rounded-xl"
+                  />
+                );
+              }
+
               return (
-                <Image
+                <div
                   key={i}
-                  src={m.src}
-                  alt="agent"
-                  width={220}
-                  height={160}
-                  className="rounded-xl"
+                  className={`max-w-[75%] px-4 py-2 rounded-2xl text-sm ${
+                    m.role === "user"
+                      ? "bg-blue-600 ml-auto text-white"
+                      : "bg-blue-200 text-blue-900"
+                  }`}
+                  dangerouslySetInnerHTML={{ __html: m.content }}
                 />
               );
-            }
+            })}
 
-            return (
-              <div
-              key={i}
-              className={`max-w-[75%] px-4 py-2 rounded-2xl text-sm ${
-                m.role === "user"
-                  ? "bg-blue-600 ml-auto"
-                  : "bg-blue-200 text-blue-900"
-              }`}
-              dangerouslySetInnerHTML={{ __html: m.content }}
-            />
-            );
-          })}
-          {/* Auto-scroll anchor */}
-          <div ref={chatEndRef} />
+            {/* Auto-scroll anchor */}
+            <div ref={chatEndRef} />
+          </div>
         </div>
 
         {/* Input */}
-        <div className="flex gap-2 mt-3">
+        <div className="flex gap-2 mtd-3 ">
           <input
             value={input}
-            onChange={e => setInput(e.target.value)}
+            onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
             className="flex-1 rounded-full px-4 py-2 text-sm"
             placeholder="Type a message..."
