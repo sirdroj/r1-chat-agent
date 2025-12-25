@@ -3,6 +3,7 @@ import { SYSTEM_PROMPT } from "./systemPrompt";
 
 
 if (!process.env.GEMINI_API_KEY) {
+  console.log(" error GEMINI_API_KEY is not defined");
   throw new Error("GEMINI_API_KEY is not defined");
 }
 const ai = new GoogleGenAI({
